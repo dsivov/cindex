@@ -39,12 +39,12 @@ int main(int argc, char** argv) {
     std::vector<double> position(1000000);
     std::vector<double> error(5000000);
     double step = 0.2;
-    //cout << step << endl; 
+    
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int64_t> rand_int64(
       0, std::numeric_limits<int64_t>::max());
-    //float a = 100.5;
+    //Create random test data (from xindex)
     for (size_t i = 0; i < index.size(); ++i){
         index[i] = rand_int64(gen); 
         //cout << index[i] <<endl;
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     sort(index.begin(), index.end());
     
     //boost::math::barycentric_rational<double>  spline(index.data(), position.data(), position.size());
-    
+    //Spline aproximated function
     tk::spline s;
     s.set_points(index,position);
     cout << position.size() << " " << index.size() << endl;
@@ -67,19 +67,16 @@ int main(int argc, char** argv) {
         auto stop = chrono::high_resolution_clock::now();
         auto duration = chrono::duration_cast<chrono::nanoseconds>(stop - start);
         total_duration = total_duration + duration.count();
-        count++;
-        //cout << index[i] << endl; 
-        cout << "Random Key:" << index[i] << " Real Position:" << i << " Predicted position:"
-                << position*index.size() << " Duration:" << duration.count() << endl; 
+        count++; 
         auto start1 = chrono::high_resolution_clock::now();
         bool f = (std::find(index.begin(), index.end(), index[i]) != index.end());
         auto stop1 = chrono::high_resolution_clock::now();
-        auto duration1 = chrono::duration_cast<chrono::nanoseconds>(stop1- start1);
-        if (f)
-            cout << "Random Key:" << index[i] << 
-                 "STD find Duration:" << duration1.count() << endl;
-        
+           
         std_total_duration = std_total_duration + duration1.count();
+        auto duration1 = chrono::duration_cast<chrono::nanoseconds>(stop1- start1);
+        cout << "Random Key:" << index[i] << " Real Position:" << i << " Predicted position:"
+                << position*index.size() << " Duration:" << duration.count() << 
+                "STD find Duration:" << duration1.count() << endl;
             
     }
     std::cout << "Average get: " << total_duration/count << " Number of gets:" << count << std::endl;   
