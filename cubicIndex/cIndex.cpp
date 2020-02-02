@@ -79,9 +79,10 @@ double fRand(double fMin, double fMax) {
     return fMin + f * (fMax - fMin);
 }
 
+int numberOfKeys = 100000000;
 int main(int argc, char** argv) {
-    std::vector<double> index(10000000);
-    std::vector<double> positions(10000000);
+    std::vector<double> index(numberOfKeys);
+    std::vector<double> positions(numberOfKeys);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int64_t> rand_int64(
@@ -118,8 +119,8 @@ int main(int argc, char** argv) {
     
     //gsl init
     gsl_interp_accel *acc = gsl_interp_accel_alloc();
-    gsl_spline *spline_steffen = gsl_spline_alloc(gsl_interp_steffen, 10000000);
-    gsl_spline_init(spline_steffen, &index[0], &positions[0], 10000000); 
+    gsl_spline *spline_steffen = gsl_spline_alloc(gsl_interp_steffen, numberOfKeys);
+    gsl_spline_init(spline_steffen, &index[0], &positions[0], numberOfKeys); 
     //alglib::real_1d_array AX, AY;
     //AX.setcontent(index.size(), &(index[0]));
     //AY.setcontent(positions.size(), &(positions[0]));
@@ -153,6 +154,7 @@ int main(int argc, char** argv) {
 //              << (double)position*index.size() << " Predicted position:" << (double)stored_position*index.size() << " Real key:" 
 //            << (int64_t)index[(int)(stored_position*index.size())]<< endl;
 
+   /*
     key = 1680000000000000;
     position = gsl_spline_eval(spline_steffen, key, acc)*index.size();
     double pos = index[position];
@@ -177,6 +179,7 @@ int main(int argc, char** argv) {
     std::cout << "Start pos: " << start_p << " Stop pos:" << stop_p <<  std::endl;
     for (int64_t j = start_p; j <= stop_p; j++)
         std::cout << "Range keys: " <<(int64_t) index[j] << std::endl;
+    */
     return 0;
 }
 
