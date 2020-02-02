@@ -15,13 +15,13 @@ CND_PACKAGE_DIR_Debug=dist/Debug/GNU-Linux/package
 CND_PACKAGE_NAME_Debug=cubicindex.tar
 CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/cubicindex.tar
 # Release configuration
-CND_PLATFORM_Release=GNU-Linux
-CND_ARTIFACT_DIR_Release=dist/Release/GNU-Linux
+CND_PLATFORM_Release=GNU_1-Linux
+CND_ARTIFACT_DIR_Release=dist/Release/GNU_1-Linux
 CND_ARTIFACT_NAME_Release=cubicindex
-CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/cubicindex
-CND_PACKAGE_DIR_Release=dist/Release/GNU-Linux/package
+CND_ARTIFACT_PATH_Release=dist/Release/GNU_1-Linux/cubicindex
+CND_PACKAGE_DIR_Release=dist/Release/GNU_1-Linux/package
 CND_PACKAGE_NAME_Release=cubicindex.tar
-CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/cubicindex.tar
+CND_PACKAGE_PATH_Release=dist/Release/GNU_1-Linux/package/cubicindex.tar
 #
 # include compiler specific variables
 #
