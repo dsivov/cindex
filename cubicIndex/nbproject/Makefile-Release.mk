@@ -65,7 +65,7 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cubicindex: ${OBJECTFILES}
 ${OBJECTDIR}/cIndex.o: cIndex.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/cIndex.o cIndex.cpp
+	$(COMPILE.cc) -O2 -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/cIndex.o cIndex.cpp
 
 # Subprojects
 .build-subprojects:
