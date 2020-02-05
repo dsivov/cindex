@@ -37,7 +37,11 @@
       <compileType>
         <ccTool>
           <standard>8</standard>
+          <commandLine>-msse4.1 -mavx -mfma</commandLine>
         </ccTool>
+        <linkerTool>
+          <commandLine>-lgsl -lgslcblas</commandLine>
+        </linkerTool>
       </compileType>
       <item path="cIndex.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -56,7 +60,7 @@
         <ccTool>
           <developmentMode>5</developmentMode>
           <standard>8</standard>
-          <commandLine>-lgsl -lgslcblas</commandLine>
+          <commandLine>-lgsl -lgslcblas -msse4.1 -mavx -mfma</commandLine>
         </ccTool>
         <fortranCompilerTool>
           <developmentMode>5</developmentMode>

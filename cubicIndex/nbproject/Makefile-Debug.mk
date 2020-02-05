@@ -42,8 +42,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=
-CXXFLAGS=
+CCFLAGS=-msse4.1 -mavx -mfma
+CXXFLAGS=-msse4.1 -mavx -mfma
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -60,7 +60,7 @@ LDLIBSOPTIONS=
 
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cubicindex: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cubicindex ${OBJECTFILES} ${LDLIBSOPTIONS}
+	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cubicindex ${OBJECTFILES} ${LDLIBSOPTIONS} -lgsl -lgslcblas
 
 ${OBJECTDIR}/cIndex.o: cIndex.cpp
 	${MKDIR} -p ${OBJECTDIR}

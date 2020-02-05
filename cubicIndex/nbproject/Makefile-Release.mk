@@ -42,8 +42,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=-lgsl -lgslcblas
-CXXFLAGS=-lgsl -lgslcblas
+CCFLAGS=-lgsl -lgslcblas -msse4.1 -mavx -mfma
+CXXFLAGS=-lgsl -lgslcblas -msse4.1 -mavx -mfma
 
 # Fortran Compiler Flags
 FFLAGS=

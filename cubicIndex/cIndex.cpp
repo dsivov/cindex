@@ -25,12 +25,72 @@
 //#include <libalglib/interpolation.h> // alglib
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_spline.h>
+#include <immintrin.h>
 
 using namespace std;
 
 /*
  * 
  */
+
+#define ALIGN __attribute__ ((aligned (32)))
+
+double mac_with_simd (double* a, double* b, unsigned int length) {
+        int i;
+        
+        __m256d ALIGN sum = {0.0, 0.0, 0.0, 0.0}; //vector to hold partial sums
+        for (i = 0; i < length; i += 4) {
+                __m256d va = _mm256_load_pd(&a[i]);
+                __m256d vb = _mm256_load_pd(&b[i]);
+                       
+                sum = _mm256_fmadd_pd (va, vb, sum);
+        }
+        
+        //sum now hold summations of all products in four parts
+        //we want scalar result
+        //two options below
+        
+#if 1 //Enable this block to perform vector sum with intrinsics
+        
+        //x86 architecture have little endian data ordering
+        
+        //                               index: 0  1  2  3 
+        //sum contains quad 64bit doubles, say: m, n, p, q
+        //we want scalar result = m + n + p + q
+        
+        //intrinsic function to extract upper 128 bits.
+        //if second parameter is zero then lower 128 bits are extracted.
+        __m128d xmm = _mm256_extractf128_pd (sum, 1); 
+        //xmm contains: p, q
+        
+        //This intrinsic is compile time only.
+        //__m256d ymm = _mm256_zextpd128_pd256 (xmm); //But missing in GCC 5.4.0
+        
+        //zero extend xmm to make 256bit vector ymm.
+        __m256d ymm = {xmm[0], xmm[1], 0, 0};
+        //ymm contains: p, q, 0, 0
+        
+        //intrinsic function to perform horizontal interleaved addition.
+        sum = _mm256_hadd_pd (sum, ymm); 
+        //sum contains: m+n, p+q, p+q, 0+0  
+        
+        //another round of horizontal interleaved addition
+        sum = _mm256_hadd_pd (sum, sum);
+        //sum contains: m+n+p+q, m+n+p+q, p+q+0, p+q+0
+
+        return sum[0]; //scalar result = m+n+p+q
+
+#else //vector sum with C arithmetic operators.
+        
+        double y = 0;
+        
+        for (i = 0; i < 4; i++) {
+                y += sum[i];
+        }
+        
+        return y; //scalar result
+#endif
+}
 
 void process_mem_usage(double& vm_usage, double& resident_set)
 {
@@ -101,12 +161,12 @@ void monoCubicIndex (std::vector<double> index, std::vector<double> positions, i
         //double position = alglib::spline1dcalc(spline, index[i]);
         int res = gsl_spline_eval_e(spline_steffen, index[i], acc, &_position);
         position =(size_t)(_position*index.size());
-        if (position != i){
-            cout <<"For real key:" << (int64_t)index[i] << " on position: " << i
-                    << " we found: " << (int64_t)key << " on position:" << position << endl;
-            cout << " Near keys, from right:" << (int64_t)index[i+1] << " Position:" << i+1
-                    << " from left:" << (int64_t)index[i-1] << " Position:" << i-1 << endl; 
-        }
+//        if (position != i){
+//            cout <<"For real key:" << (int64_t)index[i] << " on position: " << i
+//                    << " we found: " << (int64_t)key << " on position:" << position << endl;
+//            cout << " Near keys, from right:" << (int64_t)index[i+1] << " Position:" << i+1
+//                    << " from left:" << (int64_t)index[i-1] << " Position:" << i-1 << endl; 
+//        }
             
         key = index[position];
         auto stop = chrono::high_resolution_clock::now();
@@ -125,28 +185,51 @@ void monoCubicIndex (std::vector<double> index, std::vector<double> positions, i
          //       << position*index.size() << " Duration:" << duration.count() << endl;
             
     }
-    std::cout << "Average get: " << total_duration/count << " Number of gets:" << count << std::endl;
+    //std::cout << "Average get: " << total_duration/count << " Number of gets:" << count << std::endl;
     return;
 }
 
-int numberOfKeys = 10000000;
-int main(int argc, char** argv) {
-    std::vector<double> index(numberOfKeys);
-    std::vector<double> positions(numberOfKeys);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int64_t> rand_int64(
-            0, std::numeric_limits<int64_t>::max());
-    //Create random test data (from xindex)
-    for (size_t i = 0; i < index.size(); ++i) {
-        index[i] = rand_int64(gen);
-        positions[i] = double (i) / index.size();
+void gen_random(char *s, const int len) {
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    cout << "Generate str" << endl;
+    for (int i = 0; i < len; ++i) {
+        int random = rand();
+        int pos = int(random % (sizeof(alphanum) - 1));
+        s[i] = alphanum[pos];
+        //cout << "Char: " << s[i] << " Pos: " << pos << "Random: " << random <<  endl;
     }
 
-    //GSL Lib monotonic cubic spline
-    monoCubicIndex (index, positions, numberOfKeys);
+    s[len] = '\0';
+}
 
-   /*
+double convertKey (char* key) {
+    double ALIGN factor[] = {pow(10.0, 7), pow(10.0, 6), pow(10.0, 5), pow(10.0, 4), pow(10.0, 3), pow(10.0, 2), pow(10.0, 1), 1};
+    char str1[] = "00000000";
+    double ALIGN indeterminates[8];
+    srand(time(NULL));
+    gen_random(str1, 8);
+    double res1 = 0; 
+    double res2 = 0;
+    auto start = chrono::high_resolution_clock::now(); 
+    for (int i = 0 ; i <= 7 ; i++){        
+        indeterminates[i] = (double) str1[i];
+        res1 = res1 + ((int)indeterminates[i] * (factor[i]));  
+        cout << "SizeOf: " << sizeof(indeterminates[i]) << endl;
+    }
+    
+    //res1 = mac_with_simd(indeterminates, factor, 8);
+    auto stop = chrono::high_resolution_clock::now(); 
+    auto duration = chrono::duration_cast<chrono::nanoseconds>(stop - start);
+    cout << " Duration:" << duration.count() << endl;
+    cout << "String1 " << str1 << " Number: " << (int64_t)(res1) << endl;
+    return 0;
+}
+
+void rangeTestCubicIndex () {
+    /*
     key = 1680000000000000;
     position = gsl_spline_eval(spline_steffen, key, acc)*index.size();
     double pos = index[position];
@@ -172,6 +255,28 @@ int main(int argc, char** argv) {
     for (int64_t j = start_p; j <= stop_p; j++)
         std::cout << "Range keys: " <<(int64_t) index[j] << std::endl;
     */
+    
+}
+int numberOfKeys = 10000000;
+int main(int argc, char** argv) {
+    std::vector<double> index(numberOfKeys);
+    std::vector<double> positions(numberOfKeys);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int64_t> rand_int64(
+            0, std::numeric_limits<int64_t>::max());
+    //Create random test data (from xindex)
+    for (size_t i = 0; i < index.size(); ++i) {
+        index[i] = rand_int64(gen);
+        positions[i] = double (i) / index.size();
+    }
+
+    //GSL Lib monotonic cubic spline
+    //monoCubicIndex (index, positions, numberOfKeys);
+    char* t;
+    convertKey(t);
+
+   
     return 0;
 }
 
